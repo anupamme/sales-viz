@@ -1,0 +1,34 @@
+[
+{
+  "name": "year",
+  "hierarchical": "true",
+  "hierarchicalcolumns": [
+    "month", "week"
+  ],
+  "title": "Select a Year"
+},
+{
+  "name": "category",
+  "hierarchical": "true",
+  "hierarchicalcolumns": ["subcategory", "item"],
+  "title": "Select a Product Category"
+},
+{
+  "name": "state",
+  "hierarchical": "true",
+  "hierarchicalcolumns": ["district"],
+  "title": "Select a State"
+},
+{
+  "name": "size",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Size Profile"
+},
+{
+  "name": "store",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Store"
+}
+]

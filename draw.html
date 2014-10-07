@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+#cardjumble {
+        position: relative;
+        width: 950px;
+        height: 500px;
+        border: 1px solid #ddd;
+        margin-top: 25px;
+        margin-bottom: 25px
+}
+
+    #cardtype {
+        position: absolute;
+        left: 10px;
+        top: 100px;
+        width: 300px;
+    }
+    #category {
+        position: absolute;
+        left: 250px;
+        top: 100px;
+        width: 240px;
+        margin-left: 20
+    }
+    #city {
+        position: absolute;
+        left: 490px;
+        top: 100px;
+        width: 200px;
+        height: 300px;
+    }
+    #numbers {
+        position: absolute;
+        left: 50px;
+        top: 10px;
+        width: 850px;
+    }
+/*
+    .primary {
+        position: relative;
+    }
+    .secondary {
+        position: relative;
+    }
+    .third {
+        position: relative;
+    }
+*/
+
+#cardany{
+    fill: grey;
+  font: 10px sans-serif;
+  text-anchor: end;   
+}
+    
+.primary rect {
+  fill: lightgrey;
+}
+.primary text {
+  fill: grey;
+  font: 10px sans-serif;
+  text-anchor: end;
+}
+
+#spendpercent {
+    color: red;
+}
+.secondary rect {
+  fill: lightgrey;
+}
+.secondary text {
+  fill: grey;
+  font: 10px sans-serif;
+  text-anchor: end;
+}
+    
+.third rect {
+  fill: lightgrey;
+}
+.third text {
+  fill: grey;
+  font: 10px sans-serif;
+  text-anchor: end;
+}
+   
+h4{
+    color: grey;
+    font: 14px sans-serif;
+    text-anchor: end;
+}
+</style>
+<body>
+<div id="cardjumble">
+<div id="cardtype">
+    <svg class="primary">
+        
+    </svg>
+</div>
+<div id="category" style="display: block;">
+    <svg class="secondary">
+        
+    </svg>
+</div>
+<div id="city" style="display: block;">
+    <svg class="third">
+        
+    </svg>
+</div>
+<div id="numbers">
+    <h4>You have selected <span id="spendpercent" data-var="per" data-format="%.2f" style="fill: red">%</span> of profits. The selected amount is <span data-var=currentspend></span> out of total of <span data-var="totalspend"></span></h4>
+</div>
+</div>
+</body>
+<script src="js/d3.min.js" charset="utf-8"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/Tangle/Tangle.js"></script>
+<script src="js/Tangle/TangleKit/sprintf.js"></script>
+<script src="js/Tangle/TangleKit/TangleKit.js"></script>
+<script src="js/Tangle/TangleKit/mootools.js"></script>
+<script src="js/crossfilter.min.js"></script>
+<script>
+    var width = 300,
+    barHeight = 13;
+
+    tangle = new Tangle (document.getElementById("numbers"), {
+    initialize: function () {
+        this.totalspend = 100.0
+        this.currentspend = 100.0;
+        this.per = 100.0
+    },
+    update: function (val1, val2) {
+//        this.calories = this.cookies * this.caloriesPerCookie;
+//        this.dailyPercent = 100 * this.calories / this.dailyCalories;
+//        this.totalspend = val1
+//        this.totaltransactions = val2
+    }
+});
+    
+var x = d3.scale.linear()
+    .range([0, width]);
+var leftMargin = 80;
+    var topMargin = 10;
+title = "Select All";
+headerForCard = "Select an Item";
+headerForCategory = "Select a Location";
+headerForCity = "Select a Supplier";
+totalitems = 18
+d3.csv("joineddata.csv", function(error, data){
+    cf = crossfilter(data);
+    cardDim = cf.dimension(function (d) { return d["ITEM"];});
+    cardDim.filterAll();
+    cardSpend = cardDim.group().reduceSum(function(d) {
+            return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];});
+        // draw the bar chart for card spend.
+    var topTypes = [{key: headerForCard, value: 0}, {key: title, value: 0}]
+    topTypes = topTypes.concat(cardSpend.top(totalitems))
+    globalsum = findSum(data, function(d) {
+            return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];})
+    tangle.setValue('totalspend', addCommas(Math.round(globalsum*100)/100))
+    var chart = d3.select(".primary")
+        .attr("width", width)
+        .attr("style", "margin: 0");
+    categoryDim = null
+    cityDim = null
+    drawBarChart(chart, topTypes, leftMargin, globalsum, 500000);
+
+//    $('#category').find('g').on('click', function (d) {
+//        console.log("in secondary");
+//  //  filteredDataCardType = cardDim.filter(d.currentTarget.__data__.key)
+//    debugger;
+//  //  $('#tertiary').find('g').remove();
+//    categoryDim.filterExact(d.currentTarget.__data__.key)
+//    cityDim = cf.dimension(function(d) { return d["city"]; });
+//    citySpend = cityDim.group().reduceSum(function(d) { return d["spend"];});
+//    topTypes = citySpend.top(20);
+//    var secondary = d3.select(".tertiary")
+//        .attr("width", width)
+//        .attr("style", "margin: 0");
+//    drawBarChart(secondary, topTypes, leftMargin + 400,                                 d.currentTarget.__data__.value);
+//  //  debugger;
+//});
+//$('#cardtype').find('g').on('click', function (d) {
+//  //  filteredDataCardType = cardDim.filter(d.currentTarget.__data__.key)
+//    debugger;
+////    $('#secondary').find('g').remove();
+//    cardDim.filterExact(d.currentTarget.__data__.key)
+//    categoryDim = cf.dimension(function(d) { return d["category"]; });
+//    categorySpend = categoryDim.group().reduceSum(function(d) { return d["spend"];});
+//    topTypes = categorySpend.top(10);
+//    var secondary = d3.select(".secondary")
+//        .attr("width", width)
+//        .attr("style", "margin: 0");
+//    drawBarChart(secondary, topTypes, leftMargin + 200, d.currentTarget.__data__.value);
+//  //  debugger;
+//});
+    });
+    
+    function drawBarChart(startElement, topTypes, leftMargin, sum, divisor, totalsum){
+        console.log("sum: " + sum);
+        tangle.setValue('currentspend', addCommas(Math.round(sum*100)/100));
+        tangle.setValue('per', Math.round((sum*10000)/globalsum)/100);
+        bar = startElement.selectAll("g")
+                .data(topTypes)
+                .enter().append("g")
+                .attr("transform", function(d, i) { return "translate(0," + i *                     barHeight + ")"; });
+        bar.append("text")
+            .attr("x", function(d) { if (d.key === headerForCard | d.key === headerForCategory | d.key === headerForCity) {
+                return leftMargin;
+            }
+                return leftMargin - 10; })
+            .attr("y", barHeight / 2 + topMargin)
+            .attr("dy", ".35em")
+            .attr("style", function(d) { if (d.key === title){
+                                            return "fill: rgb(255, 0, 0)";
+                                            }
+                                        else {
+                                            return "fill: lightgrey";
+                                        }})
+            .text(function(d) { return d.key; });
+    
+        bar.append("rect")
+            .attr("margin", 0)
+            .attr("width", function(d) { return x(d.value)/divisor; })
+            .attr("x", leftMargin)
+            .attr("height", barHeight - 1)
+            .attr("y", 10);
+        
+        bar.append("text")
+            .attr("x", function(d) {return x(d.value)/divisor + leftMargin + 30;})
+            .attr("y", barHeight / 2 + topMargin)
+            .attr("dy", ".35em")
+            .text(function(d) { if (d.value === 0){
+                                    return "";
+                                }
+                                else {
+                                   return Math.round((d.value * 10000)/sum)/100; 
+                                }
+                                });
+        
+        addition = 80;
+        bar.on('click', function(d) {
+            if (d.key === headerForCard | d.key === headerForCategory | d.key === headerForCity){
+                return;
+            }
+            $(this.parentNode).find('rect').each(function(i, e) {
+                e.style.fill = 'lightgrey';});
+            $(this.parentNode).find('text').each(function(i, e) {
+                e.style.fill = 'lightgrey';});
+            $(this.parentNode).find('text').each(function(i, e) {
+                e.style.fill = 'lightgrey';});
+//            $(this).parent.find('text').style.fill = 'lightgrey';
+            $(this).find('rect')[0].style.fill = 'red';
+            $(this).find('text')[0].style.fill = 'red';
+            $(this).find('text')[1].style.fill = 'red';
+            if (d.key !== title){
+                $(this.parentNode).find('text')[0].style.fill = 'red';
+            }
+            nextsum = d.value
+            if ("primary" === this.parentElement.className.baseVal){
+                $('.secondary').find('g').remove();
+                $('.third').find('g').remove();
+                cardDim.filterAll()
+                if (categoryDim != null){
+                    categoryDim.filterAll()
+                    categoryDim.dispose()
+                }
+                if (cityDim != null){
+                    cityDim.filterAll()
+                }
+                if (categoryDim != null){
+                 categoryDim.filterAll()   
+                }
+                if (cityDim != null){
+                    cityDim.filterAll()
+                }
+                cardDim.filterAll()
+                if (d.key === title){
+                    cardDim.filterAll()
+                    nextsum = globalsum
+                    divisor = 500000;
+                }
+                else {
+                    if (categoryDim != null){
+                        categoryDim.dispose()
+                    }
+                    if (cityDim != null){
+                        cityDim.dispose()
+                    }
+                    cardDim.dispose()
+                    cardDim = cf.dimension(function(d) { return d["ITEM"];});
+                    cardDim.filterExact(d.key)
+                    divisor = 500000;
+                    nextsum = d.value
+                }
+                categoryDim = cf.dimension(function(d) { return d["LOC"]; });
+                categorySpend = categoryDim.group().reduceSum(function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];});
+                topTypes = [{key: headerForCategory, value: 0}, {key: title, value: 0}]
+                topTypes = topTypes.concat(categorySpend.top(15))
+                var secondary = d3.select(".secondary")
+                    .attr("width", width)
+                    .attr("style", "margin: 0");
+            }
+            else if ("secondary" === this.parentElement.className.baseVal){
+                debugger;
+                $('.third').find('g').remove();
+                if (cityDim != null){
+                    cityDim.filterAll()
+                    cityDim.dispose()
+                //    divisor = 40000000
+                }
+                else {
+                //    divisor = 50000000;
+                }
+                categoryDim.filterAll()
+                divisor = 5000000;
+                if (d.key === title){
+                    nextsum = sum
+                    divisor = 500000
+                    categoryDim.filterAll()
+                }
+                else {
+                    categoryDim.filterExact(d.key)
+                    if (cityDim != null){
+                        cityDim.dispose()
+                    }
+                    divisor = 500000
+                    nextsum = d.value
+                }
+                cityDim = cf.dimension(function(d) { return d["SUPPLIER"]; });
+                citySpend = cityDim.group().reduceSum(function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];});
+                var topTypes = [{key: headerForCity, value: 0}, {key: title, value: 0}]
+                
+                topTypes = topTypes.concat(citySpend.top(5))
+                var secondary = d3.select(".third")
+                    .attr("width", 200)
+                    .attr("height", 500)
+                    .attr("style", "margin: 0");
+                addition = 0;
+            }
+            else if ("third" === this.parentElement.className.baseVal){
+                $('.primary').find('g').remove();
+                $('.secondary').find('g').remove();
+                cardDim.filterAll()
+            //    cardDim.dispose()
+                categoryDim.filterAll()
+                cityDim.filterAll()
+            //    categoryDim.dispose()
+                if (d.key === title){
+                    nextsum = sum
+                    cityDim.filterAll()
+                    divisor = 500000;
+                }
+                else {
+                    cityDim.filterExact(d.key)
+                    nextsum = d.value
+//                    citygroup = cityDim.group().reduceSum(function(d) { return d["spend"];})
+//                    var citydata = citygroup.top(100)
+//                    debugger;
+//                    for (val in citydata){
+//                        console.log(val.key)
+//                        if (citydata[val].key === d.key){
+//                            console.log("match found")
+//                            nextsum = citydata[val].value
+//                        }
+//                    }
+//                    console.log(citygroup[d.key])
+                    divisor = 500000;
+                }
+        //        cardDim = cf.dimension(function(d) { return d["card"];});
+                cardSpend = cardDim.group().reduceSum(function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];});
+                var topTypes = [{key: headerForCard, value: 0}, {key: title, value: 0}]
+                topTypes = topTypes.concat(cardSpend.top(20))
+                var secondary = d3.select(".primary")
+                    .attr("width", width)
+                    .attr("style", "margin: 0");
+                addition = 0;
+                drawBarChart(secondary, topTypes, leftMargin + 0, nextsum, divisor);        
+        //        categoryDim = cf.dimension(function(d) { return d["category"];});
+                categorySpend = categoryDim.group().reduceSum(function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];});
+                topTypes = [{key: headerForCategory, value: 0}, {key: title, value: 0}]
+                topTypes = topTypes.concat(categorySpend.top(15))
+                var secondary = d3.select(".secondary")
+                    .attr("width", width)
+                    .attr("style", "margin: 0");
+         //       divisor = 40000000;
+                addition = 0;
+            }
+            drawBarChart(secondary, topTypes, leftMargin + 0, nextsum, divisor, sum);
+        });
+    }
+    
+    function addCommas(nStr)
+    {
+        nStr += '';
+        var x = nStr.split('.');
+        var x1 = x[0];
+        var x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+            x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+    }
+        
+    function findSum(arr, func) {
+        var sum = 0
+        for (val in arr){
+            computedVal = func(arr[val])
+            var parsedVal = parseFloat(computedVal)
+            if (!isNaN(parsedVal)){
+                sum += parsedVal
+            }
+            else {
+                return sum   
+            }
+         //   console.log(sum)
+        }
+      //  console.log(sum)
+        return sum;
+    }
+</script>
