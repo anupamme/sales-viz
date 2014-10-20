@@ -1,0 +1,49 @@
+[
+{
+  "name": "year",
+  "hierarchical": "true",
+  "hierarchicalcolumns": [
+    "month"
+  ],
+  "title": "Select a Year"
+},
+{
+  "name": "category",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Category"
+},
+{
+  "name": "state",
+  "hierarchical": "true",
+  "hierarchicalcolumns": ["district"],
+  "title": "Select a State"
+},
+{
+  "name": "size",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Size Profile"
+},
+{
+  "name": "store",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Store"
+},
+{
+  "name": "item",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Top Items",
+  "maxItems": "10"
+},
+{
+  "name": "month",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Trend",
+  "type": "line"
+}
+    
+]
