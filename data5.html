@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <style>
+        #time {
+            position: relative;  
+            width: 300px;
+            height: 500px;
+        }
+        .primary {
+            height: 400px;
+        }
+        .primary rect {
+            fill: lightgrey;
+        }
+        .primary text {
+            fill: grey;
+            font: 10px sans-serif;
+            text-anchor: end;
+        }
+        #trend {
+            fill: grey;
+            font: 12px sans-serif;
+            text-anchor: end;
+        }
+        .tertiary {
+            height: 400px;
+        }
+        .tertiary rect {
+            fill: lightgrey;
+        }
+        .tertiary text {
+            fill: grey;
+            font: 12px sans-serif;
+            text-anchor: end;
+        }
+        #spendpercent {
+            color: red;
+        }
+        body {
+            font: 10px sans-serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .x.axis path {
+            display: none;
+        }
+
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
+        
+        #numbers {
+            color: grey;
+        }
+        
+        h1{
+            text-align: center;
+            color: grey
+        }
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+        .focus circle {
+            fill: none;
+            stroke: steelblue;
+        }
+
+        .fileUpload {
+            position: relative;
+            overflow: hidden;
+            margin: 10px 5px 10px 10px;
+        }
+        .fileUpload input.upload {
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0;
+            filter: alpha(opacity=0);
+            cursor: pointer;
+        }
+        input, button, select, textarea{
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        .btn{
+            background: #428bca;
+            color: #fff;
+            margin-left: 20px;
+        }
+        .btn:hover{
+            background: #428bca;
+            color: #fff;
+        }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+</head>    
+<body>
+    <h1>Profits Dashboard</h1>
+   
+    <div id="inputs" class="fileUpload btn btn-primary">
+        <span>Upload CSV</span>
+        <input type="file" id="files" name="files[]" class="upload">
+    </div>
+    <input id="uploadFile" placeholder="Choose File" disabled="disabled" />
+
+     <div id="json" class="fileUpload btn btn-primary">
+        <span>Upload Spec</span>
+        <input type="file" id="jsonSpec" name="files[]" class="upload">
+    </div>
+    <input id="uploadSpec" placeholder="Choose File" disabled="disabled" />
+
+    <input type="button" id="genrate_graph" value="Genrate Graph" class="btn btn-default" />
+   <!--output id="list"></output>
+   <table id="contents" style="width:100%; height:400px;" border=""></table-->
+
+    <div id="numbers" style="top: 400px; font-size: initial; text-align: center">
+        <h4>You have selected <span id="spendpercent" data-var="per" data-format="%.2f" style="fill: red">%</span> of profits. The selected amount is <span data-var=currentspend></span> out of total of <span data-var="totalspend"></span></h4>
+    </div>
+    <div id="time">
+    </div>
+</body>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/jquery.csv.js"></script>
+<script>
+    var globalspec = null,
+    globaldata = null,
+    csvHeaders = new Array(),
+    specHeaders = new Array();
+
+  $(document).ready(function() {
+    if(isAPIAvailable()) {
+      $('#files').bind('change', handleFileSelect);
+      $('#jsonSpec').bind('change', handleJsonData);
+    }
+  });
+
+  function isAPIAvailable() {
+    // Check for the various File API support.
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+      // Great success! All the File APIs are supported.
+      return true;
+    } else {
+      // source: File API availability - http://caniuse.com/#feat=fileapi
+      // source: <output> availability - http://html5doctor.com/the-output-element/
+      document.writeln('The HTML5 APIs used in this form are only available in the following browsers:<br />');
+      // 6.0 File API & 13.0 <output>
+      document.writeln(' - Google Chrome: 13.0 or later<br />');
+      // 3.6 File API & 6.0 <output>
+      document.writeln(' - Mozilla Firefox: 6.0 or later<br />');
+      // 10.0 File API & 10.0 <output>
+      document.writeln(' - Internet Explorer: Not supported (partial support expected in 10.0)<br />');
+      // ? File API & 5.1 <output>
+      document.writeln(' - Safari: Not supported<br />');
+      // ? File API & 9.2 <output>
+      document.writeln(' - Opera: Not supported');
+      return false;
+    }
+  }
+
+  function handleFileSelect(evt) {
+    var files = evt.target.files; // FileList object
+    var file = files[0];
+
+    // read the file metadata
+    var output = ''
+        output += '<span style="font-weight:bold;">' + escape(file.name) + '</span><br />\n';
+        output += ' - FileType: ' + (file.type || 'n/a') + '<br />\n';
+        output += ' - FileSize: ' + file.size + ' bytes<br />\n';
+        output += ' - LastModified: ' + (file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a') + '<br />\n';
+
+    $("#uploadFile").val(file.name);    
+    // read the file contents
+    printTable(file);
+
+
+    // post the results
+   // $('#list').append(output);
+  }
+
+ function handleJsonData(evt){
+    var files = evt.target.files; // FileList object
+    var file = files[0];
+    var reader = new FileReader();
+    $("#uploadSpec").val(file.name);     
+    reader.readAsText(file);
+    reader.onload = function(event){
+        var text = reader.result;
+        var specJson = JSON.stringify(eval(text));
+       globalspec = $.parseJSON( specJson );
+      // console.log(globalspec);
+       for(var rowHeader=0; rowHeader<globalspec.length; rowHeader++){
+            specHeaders.push(globalspec[rowHeader].name);
+        }       
+    };
+
+  }
+
+  function printTable(file) {
+    var reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function(event){
+      var csv = event.target.result;
+    data = $.csv.toObjects(csv);
+    globaldata = data;
+    for(var rowHeader in data[0]){
+        if(rowHeader.indexOf("function ") == -1){
+            csvHeaders.push(rowHeader);
+        }
+      }
+      /*for(var row in data) {
+        html += '<tr>\r\n';
+        for(var item in data[row]) {
+          html += '<td>' + data[row][item] + '</td>\r\n';
+        }
+        html += '</tr>\r\n';
+      }*/
+      //$('#contents').html(html);
+    };
+    reader.onerror = function(){ alert('Unable to read ' + file.fileName); };
+  }
+
+$("#genrate_graph").click( function(){
+    var chk = -1, errorHeader = "";
+    for(var i=0; i< specHeaders.length; i++){
+        //console.log(specHeaders[i]);
+        var chk = $.inArray(specHeaders[i], csvHeaders);
+        if(chk == -1){
+            errorHeader = specHeaders[i];
+            break;
+        }
+       // console.log($.inArray(specHeaders[i], csvHeaders));
+        //console.log(chk);
+    }
+    if(chk != -1){
+        genrateGraph();
+    }
+    else{
+        alert('"'+errorHeader+'"' + ' Field in Spec doesnot match with CSV File Header uploaded !');
+    }
+});
+  
+</script>
+
+<script src="js/d3.min.js" charset="utf-8"></script>
+<script src="js/crossfilter.min.js"></script>
+<script src="js/Tangle/Tangle.js"></script>
+<script src="js/Tangle/TangleKit/sprintf.js"></script>
+<script src="js/Tangle/TangleKit/TangleKit.js"></script>
+<script src="js/Tangle/TangleKit/mootools.js"></script>
+<script>
+ 
+
+
+    var leftMargin = 120;
+    var topMargin = 10;
+    var bigNumber = 100;
+    var barHeight = 14, width = 300;
+    var x = d3.scale.linear().range([0, width]); 
+    var title = "Select All";
+    var hierarchicalType = "hierarchical"
+    
+    var globalMapForDimensions = {}
+    var cf = null
+    // to store state: only data we store to store state.
+    var lastClickWasLastRow = false
+
+
+function genrateGraph(){
+
+    tangle = new Tangle (document.getElementById("numbers"), {
+    initialize: function () {
+        this.totalspend = 100.0;
+        this.currentspend = 100.0;
+        this.per = 100.0;
+    },
+        update: function(){}
+    });
+/*
+*   Read the spec file and print javascript code.
+*/
+
+
+
+ 
+   // d3.json('data/spec2.json', function(error, spec){
+        if (globalspec.length === 0){
+            return
+        }
+        //globalspec = spec;
+        // read the data file.
+       // d3.csv('data/data4.csv', function(error, data) {
+            //console.log(data);
+            //globaldata = data
+            cf = crossfilter(data)
+            // step 1: paint the unikey with hierarchy.
+            globalsum = findSum(data, function(d) { return d["finalRetailPrice"] * d["salesQuantity"];})
+            tangle.setValue('currentspend', addCommas(Math.round(globalsum*100)/100))
+            tangle.setValue('totalspend', addCommas(Math.round(globalsum*100)/100))
+            tangle.setValue('per', Math.round(globalsum/globalsum) * 100);
+            paintAll(0, globalsum)
+       // });
+   // });
+}
+    
+    function GetOrCreateDimension(key){
+        var keyDim = null
+        if (globalMapForDimensions[key] === undefined){
+            keyDim = cf.dimension(function(d){ return d[key];});
+            globalMapForDimensions[key] = keyDim
+        }
+        else {
+            keyDim = globalMapForDimensions[key]
+        }
+        return keyDim
+    }
+    
+    function paintAll(index, sum){
+        for (var i = Math.max(index, 0); i < globalspec.length + index; i++)
+            {
+                if (i >= globalspec.length){
+                   break 
+                }
+                key = globalspec[i]["name"]
+                if (key === "" | key === undefined){
+                    break
+                }
+                var keyDim = null
+                keyDim = GetOrCreateDimension(key)
+                keyDimSpend = keyDim.group().reduceSum(function(d){ return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"]; })
+                //var topTypes = keyDimSpend.top(bigNumber)
+                var leftPos = i * 270 // XXX: calculate left position correctly.
+                var type = globalspec[i]["type"]
+                var maxNo = Number.parseInt(globalspec[i]["maxItems"])
+                if (!Number.isInteger(maxNo)){
+                    maxNo = bigNumber
+                }
+                if (type === 'line'){
+                    var topTypes = keyDimSpend.top(maxNo)
+                    var margin = {top: 100, right: 20, bottom: 30, left: 50}
+                    drawTrendLine(topTypes, sum, margin)
+                }
+                else {
+                    var topTypes = [{key: globalspec[i]['title'], value: 0}, {key: title, value: sum}]
+                    topTypes = topTypes.concat(keyDimSpend.top(maxNo))
+                    var node = "<svg id='" + key + "' class='tertiary' style='position: absolute left: 150px height: 400px'></svg>"
+                    //var addPosition = findPosition(key)
+                    //$('#time').add()
+                    $('#time').append(node)
+                    var newnode = null
+                    if (globalspec[i]['name'] === 'item'){
+                        newnode = d3.selectAll('#' + key)
+                        .attr("width", width)
+                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 810px;');
+                    }
+                    else {
+                    newnode = d3.selectAll('#' + key)
+                        .attr("width", width)
+                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: ' + leftPos + 'px; top: 400px;');
+                    }
+                    drawBarChart(newnode, topTypes, sum, leftMargin, keyDim, globalspec[i]["hierarchicalcolumns"], 0, i)
+                }
+                keyDim.filterAll()
+            }
+            // generate data and call draw trend line.
+            // generating data is an issue: 
+    }
+    
+    function camelCase(str){
+        if (str.length == 0){
+            return str
+        }
+        return str[0].toUpperCase() + str.substring(1)
+    }
+    
+    function addCommas(nStr)
+    {
+        nStr += '';
+        var x = nStr.split('.');
+        var x1 = x[0];
+        var x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+            x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+    }
+    
+    function findPosition(key){
+        for (index in globalspec){
+            if (globalspec[index]["name"] === key)
+                return index
+        }
+        return -1
+    }
+    
+    function filterInner(key, innerColumns){
+        dim = globalMapForDimensions[key]
+        dim.filterAll()
+        for (var inner = 0; inner < innerColumns.length; inner++){
+            dim = globalMapForDimensions[innerColumns[inner]]
+            if (dim === undefined){
+                // no op.
+            }
+            else {
+                dim.filterAll()
+            }
+        }
+    }
+    
+    function filterAll(index){
+        if (index === undefined | index === 0){
+            index = 0
+        }
+        if (index !== undefined && index >= 0){
+            for (var i = index; i < globalspec.length; i++){
+                key = globalspec[i]["name"]
+                var innerColumns = globalspec[i]["hierarchicalcolumns"]
+                filterInner(key, innerColumns)
+            }
+        }
+//        else{ 
+//            for (key in globalMapForDimensions){
+//                filterInner(key)
+//            }
+//        }
+    }
+    
+    function deleteChildren(node, index){
+        var tosub = Math.min(0, index)
+        while ($(node).children().length > Math.abs(index)){
+            $(node.children()[$(node).children().length - 1 + tosub]).remove()
+        }
+    }
+    
+    function drawBarChart(startElement, topTypes, sum, leftMargin, dimension, hierarchicalNodes, innerIndex, higherIndex){
+        for (i = 2; i < topTypes.length; i++){
+            if (topTypes[i].value === 0){
+                topTypes.splice(i, Number.MAX_VALUE)
+            }
+        }
+        var bar = startElement.selectAll("g")
+                .data(topTypes)
+                .enter().append("g")
+                .attr("transform", function(d, i) { return "translate(0," + i *                     barHeight + ")"; });
+        
+        var text1 = bar.append("text")
+            .attr("x", function(d) { 
+            if (d.value === 0) 
+            {
+                return leftMargin + 10;
+            }
+                return leftMargin - 10;
+             })
+            .attr("y", barHeight / 2 + topMargin)
+            .attr("dy", ".35em")
+            .attr("style", function(d) { 
+              if (d.key === title){
+                return "fill: rgb(255, 0, 0)";
+              }
+              else {
+                return "fill: lightgrey";
+              }})
+            .text(function(d) { return d.key; });
+    
+        var rect = bar.append("rect")
+            .attr("margin", 0)
+            .attr("width", function(d) { 
+                if (d.key === title){
+                    return 0
+                }
+                else{
+                    return x(d.value)/500000; 
+                }})
+            .attr("x", leftMargin)
+            .attr("height", barHeight - 1)
+            .attr("y", 10);
+        
+        bar.append("text")
+            .attr("x", function(d) {return x(d.value)/500000 + leftMargin + 30;})
+            .attr("y", barHeight / 2 + topMargin)
+            .attr("dy", ".35em")
+            .text(function(d) { 
+                if (d.value === 0 | d.key === title){
+                    return "";
+                }
+                else {
+                    return Math.round((d.value * 10000)/sum)/100; 
+                }
+            });
+        
+        
+        // draw the line graph here.
+//        var margin = {top: 200, right: 20, bottom: 30, left: 300}
+//        var hangingTag = $('#trendingChart')
+//        var dataForTrendLine = []
+//        drawTrendLine(margin, hangingTag, data)
+        
+        var nextLevel = hierarchicalNodes[innerIndex]
+        
+        text1.on('click', function(d){
+            if (d.key === title){
+                var headDiv = $('#time')
+                var currentSvgIndex = $(this).parent().parent().index()
+                var currentSVGNode = $(headDiv.children()[currentSvgIndex])
+                currentSVGNode.find('rect').each(function(i, e) {
+                    e.style.fill = 'lightgrey';});
+                currentSVGNode.find('text').each(function(i, e) {
+                    e.style.fill = 'lightgrey';});
+                $(this).attr('style', "fill: rgb(255, 0, 0)");
+                var currentSvgIndex = $(this).parent().parent().index()
+                var headDiv = $(this).parent().parent().parent()
+                if (lastClickWasLastRow === false){
+                    filterAll(currentSvgIndex)
+                    deleteChildren(headDiv, currentSvgIndex + 1)
+                    tangle.setValue('currentspend', addCommas(Math.round(d.value*100)/100));
+            tangle.setValue('per', Math.round((d.value*10000)/globalsum)/100);
+                    paintAll(currentSvgIndex + 1, d.value)
+                }
+                else {
+                    filterAll(0)
+                    deleteChildren(headDiv, 0)
+                    var localSum = findSum(globaldata, function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];})
+                    tangle.setValue('currentspend', addCommas(Math.round(localSum*100)/100));
+            tangle.setValue('per', Math.round((localSum*10000)/globalsum)/100);
+                    paintAll(0, localSum)
+                }
+            }
+        })
+        rect.on('click', function(d){
+            console.log("my val: " + d.value)
+            tangle.setValue('currentspend', addCommas(Math.round(d.value*100)/100));
+            tangle.setValue('per', Math.round((d.value*10000)/globalsum)/100);
+            var headDiv = $('#time')
+            var currentSvgIndex = higherIndex
+            var parentNode = $(this).parent()
+            var currentSVGNode = $(headDiv.children()[currentSvgIndex])
+            
+            currentSVGNode.find('rect').each(function(i, e) {
+                e.style.fill = 'lightgrey';});
+            currentSVGNode.find('text').each(function(i, e) {
+                e.style.fill = 'lightgrey';});
+//            currentSVGNode.find('text').each(function(i, e) {
+//                e.style.fill = 'lightgrey';});
+//            $(this).parent.find('text').style.fill = 'lightgrey';
+            $(this)[0].style.fill = 'red';
+            parentNode.find('text')[0].style.fill = 'red';
+            parentNode.find('text')[1].style.fill = 'red';
+            if (d.key !== title){
+                $(this.parentNode).find('text')[0].style.fill = 'red';
+            }
+            /*
+                1. if not last node:
+                    1. clear any filter which is due to node which is on the right.
+                    2. repaint the current node.
+                    3. add the filter of current node.
+                    3. re-paint all the nodes on the right.
+                else if last node:
+                    1. clear all filters.
+                    2. repaint the current node.
+                    3. add the filter.
+                    4. repaint all the nodes on the left.
+            */
+            // path to div and index
+            if (globalspec != null){
+                if (globalspec.length >= currentSvgIndex + 1){
+                    if (currentSvgIndex === globalspec.length - 1) {
+                        // last column.
+                        filterAll()
+                        deleteChildren(headDiv, -1)
+                        // create dimension apply filter of current node.
+                        var keyDim = globalMapForDimensions[globalspec[currentSvgIndex]["name"]]
+                        keyDim.filter(d.key)
+                        paintAll(-1, d.value)
+                        // repaint all nodes from 0 to second last.
+                        // hack to bring the order back of children.
+                        var dup = $('#time').children()[0]
+                        $('#time').children()[0].remove()
+                        //$(dup).attr('id', $($('#time').children()[0]).attr('id'))
+                        $('#time').append(dup)
+                        lastClickWasLastRow = true
+                    }
+                    else {
+                        if (lastClickWasLastRow){
+                            filterAll()
+                            // calculate path to div#time node.
+                            // delete the children from currenthigherindex.
+                            deleteChildren(headDiv, 0)
+                            // apply filter of current node (if any)
+                            var keyDim = globalMapForDimensions[globalspec[currentSvgIndex]["name"]]
+                            paintAll(- globalspec.length + currentSvgIndex + 1, globalsum)
+                            keyDim.filter(d.key)
+                            paintAll(currentSvgIndex + 1, d.value)
+                        }
+                        else {
+                            filterAll(currentSvgIndex)
+                            // calculate path to div#time node.
+                            // delete the children from currenthigherindex.
+                            deleteChildren(headDiv, currentSvgIndex + 1)
+                            // apply filter of current node (if any)
+                            // find higher and inner key
+                            var currentHigherKey = globalspec[currentSvgIndex]["name"]
+                            var currentNode = $(this).parent()
+                            var currentKey = currentNode.parent().attr('id')
+                            
+                            while(currentKey !== currentHigherKey){
+                                var currentDim = globalMapForDimensions[currentKey]
+                                var currentVal = $(currentNode.children()[0]).text()
+                                currentDim.filter(currentVal)
+                                
+                                currentNode = currentNode.parent().parent()
+                                currentKey = currentNode.parent().attr('id')
+                            }
+                            var currentVal2 = $(currentNode.children()[0]).text()
+                            globalMapForDimensions[currentHigherKey].filter(currentVal2)
+                            paintAll(currentSvgIndex + 1, d.value)    
+                        }
+                        // paint self and following children.
+                        lastClickWasLastRow = false
+                        
+                    }
+                }
+            }
+            if (nextLevel !== undefined){
+                var nextNode = parentNode.find('#' + nextLevel)[0]
+                visibility = $(nextNode).attr('style')
+                if (visibility.indexOf("hidden") == -1)
+                {
+                     // it is visible so hide it.
+                     $(nextNode).attr('style', 'visibility: hidden')
+                    // bring the lower svgs up.
+                    heightOfNextBar = $(nextNode)[0].getBBox().height - 20
+                    var children = parentNode.parent().children()
+                    for (i = parentNode.index() + 1; i < children.length; i++){
+                        var trans = $(parentNode.parent().children()[i]).attr('transform')
+                        var substr = 'translate(0,'
+                        var start = trans.indexOf(substr) + substr.length
+                        var end = trans.indexOf(')')
+                        var num = trans.substring(start, end)
+                        $(parentNode.parent().children()[i]).attr('transform', 'translate(0,' + (Number(num) - Number(heightOfNextBar)) + ')')
+                    } 
+//                     var currentval = $(this).attr('transform')
+//                     var newval = 'translate(0, 39)'
+//                     $($(this).parent().parent().children()[$(this).index() + 1]).attr('transform', newval)
+                }
+                 else {
+                    $(nextNode).attr('style', 'visibility: visible')
+                    // push the lower svgs down.
+                    heightOfNextBar = $(nextNode)[0].getBBox().height - 20
+                    var children = parentNode.parent().children()
+                    for (i = parentNode.index() + 1; i < children.length; i++){
+                        var trans = $(parentNode.parent().children()[i]).attr('transform')
+                        var substr = 'translate(0,'
+                        var start = trans.indexOf(substr) + substr.length
+                        var end = trans.indexOf(')')
+                        var num = trans.substring(start, end)
+                        $(parentNode.parent().children()[i]).attr('transform', 'translate(0,' + (Number(num) + Number(heightOfNextBar)) + ')')
+                    }
+                 }
+            }
+        })
+        
+        if (hierarchicalNodes[innerIndex] !== undefined){
+                topTypes.forEach(function(d, i){
+                    dimension.filterAll()
+                    if (i === 0){
+                        
+                    }
+                    else {
+                        dimension.filterExact(d.key)
+                        var tmpName = "secondary"
+                        newdimensionname = hierarchicalNodes[innerIndex]
+                        var node = "<svg id='" + newdimensionname + "' class='" + tmpName+ "'></svg>"
+                        $(bar[0][i]).append(node)
+                        var newnode = d3.selectAll('#' + newdimensionname)
+                                        .attr("width", width)
+                                        .attr("style", 'visibility: hidden');
+                        if (newnode[0].length > 1){
+                            newnode[0].splice(0, 1)
+                        }
+                         // dimension.
+                        var newtoptypes = null
+                        
+                        var newdimension = GetOrCreateDimension(newdimensionname)
+                        var newdimensionSpend = newdimension.group().reduceSum(function(d){return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];})
+                             newtoptypes = [{key: "", value: 0}]
+                             newtoptypes = newtoptypes.concat(newdimensionSpend.top(bigNumber))
+//                        var newtoptypes = newdimensionSpend.top(bigNumber)
+                             newsum = d.value
+                        drawBarChart(newnode, newtoptypes, newsum, leftMargin + 30, newdimension, hierarchicalNodes, innerIndex + 1, higherIndex)
+                        dimension.filterAll()
+                    }
+                });
+            }
+    }
+    
+    var parseMonth = d3.time.format("%b").parse,
+    bisectDate = d3.bisector(function(d) { 
+        return d.key; }).left,
+    formatValue = d3.format(",.2f"),
+    formatCurrency = function(d) { return "Rs" + formatValue(d); };
+
+    function drawTrendLine(data, sum, margin){     
+    //        var margin = {top: 20, right: 20, bottom: 30, left: 50},
+        var width = 720 - margin.left - margin.right,
+            height = 375 - margin.top - margin.bottom;
+
+        var x = d3.time.scale()
+            .range([0, width]);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+        var line = d3.svg.line()
+            .x(function(d) { return x(d.key); })
+            .y(function(d) { return y(d.value); });
+
+        var svg = d3.select("#time").append("svg")
+            .attr("id", "trend")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .attr("style", "position: absolute; top: -100")
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            
+        data.forEach(function(d){
+            d.key = parseMonth(d.key);
+            d.value = +d.value;
+        })
+        
+        data.sort(function(a, b) { return d3.ascending(a['key'], b['key']) })
+
+      x.domain(d3.extent(data, function(d) { return d.key; }));
+      y.domain(d3.extent(data, function(d) { return d.value; }));
+
+      svg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(xAxis)
+//          .append("text")
+//          .attr("x", 500)
+//          .attr("dx", ".71em")
+//          .style("text-anchor", "end")
+//          .text("Months");
+
+      svg.append("g")
+          .attr("class", "y axis")
+          .call(yAxis)
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .text("Profits");
+
+      svg.append("path")
+          .datum(data)
+          .attr("class", "line")
+          .attr("d", line);
+        
+    var focus = svg.append("g")
+      .attr("class", "focus")
+      .style("display", "none");
+
+      focus.append("circle")
+          .attr("r", 4.5);
+
+      focus.append("text")
+          .attr("x", 9)
+          .attr("dy", ".35em");
+
+      svg.append("rect")
+          .attr("class", "overlay")
+          .attr("width", width)
+          .attr("height", height)
+          .on("mouseover", function() { focus.style("display", null); })
+          .on("mouseout", function() { focus.style("display", "none"); })
+          .on("mousemove", mousemove);
+    
+    function mousemove() {
+        var x0 = x.invert(d3.mouse(this)[0]),
+            i = bisectDate(data, x0, 1),
+            d0 = data[i - 1],
+            d1 = data[i],
+            d = x0 - d0.key > d1.key - x0 ? d1 : d0;
+        focus.attr("transform", "translate(" + x(d.key) + "," + y(d.value) + ")");
+        focus.select("text").text(formatCurrency(d.value));
+    }
+}
+    
+    
+    function findSum(arr, func) {
+        var sum = 0
+        for (val in arr){
+            computedVal = func(arr[val])
+            var parsedVal = parseFloat(computedVal)
+            if (!isNaN(parsedVal)){
+                sum += parsedVal
+            }
+            else {
+                return sum   
+            }
+         //   console.log(sum)
+        }
+      //  console.log(sum)
+        return sum;
+    }
+</script>

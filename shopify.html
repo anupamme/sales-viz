@@ -79,9 +79,9 @@
     
 </style>
 <body>
-    <h1>Profits Dashboard</h1>
+    <h1>Sales Dashboard</h1>
 <div id="numbers" style="top: 400px; font-size: initial; text-align: center">
-    <h4>You have selected <span id="spendpercent" data-var="per" data-format="%.2f" style="fill: red">%</span> of profits. The selected amount is <span data-var=currentspend></span> out of total of <span data-var="totalspend"></span></h4>
+    <h4>You have selected <span id="spendpercent" data-var="per" data-format="%.2f" style="fill: red">%</span> of sales. The selected amount is <span data-var=currentspend></span> out of total of <span data-var="totalspend"></span></h4>
 </div>
 <div id="time">
  
@@ -121,18 +121,19 @@
     var globaldata = null
     // to store state: only data we store to store state.
     var lastClickWasLastRow = false
+    var barDivider = 100000
  
-    d3.json('data/spec2.json', function(error, spec){
+    d3.json('data/shopify.json', function(error, spec){
         if (spec.length === 0){
             return
         }
         globalspec = spec
         // read the data file.
-        d3.csv('data/data4.csv', function(error, data) {
+        d3.csv('data/shopify.csv', function(error, data) {
             globaldata = data
             cf = crossfilter(data)
             // step 1: paint the unikey with hierarchy.
-            globalsum = findSum(data, function(d) { return d["finalRetailPrice"] * d["salesQuantity"];})
+            globalsum = findSum(data, function(d) { return d["promotionalRetailPrice"] * d["salesQuantity"];})
             tangle.setValue('currentspend', addCommas(Math.round(globalsum*100)/100))
             tangle.setValue('totalspend', addCommas(Math.round(globalsum*100)/100))
             tangle.setValue('per', Math.round(globalsum/globalsum) * 100);
@@ -164,7 +165,7 @@
                 }
                 var keyDim = null
                 keyDim = GetOrCreateDimension(key)
-                keyDimSpend = keyDim.group().reduceSum(function(d){ return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"]; })
+                keyDimSpend = keyDim.group().reduceSum(function(d){ return d["promotionalRetailPrice"] * d["salesQuantity"]; })
                 //var topTypes = keyDimSpend.top(bigNumber)
                 var leftPos = i * 270 // XXX: calculate left position correctly.
                 var type = globalspec[i]["type"]
@@ -185,7 +186,7 @@
                     //$('#time').add()
                     $('#time').append(node)
                     var newnode = null
-                    if (globalspec[i]['name'] === 'item'){
+                    if (globalspec[i]['name'] === 'item' || globalspec[i]['name'] === 'ITEM'){
                         newnode = d3.selectAll('#' + key)
                         .attr("width", width)
                         .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 810px;');
@@ -307,14 +308,14 @@
                     return 0
                 }
                 else{
-                    return x(d.value)/500000; 
+                    return x(d.value)/barDivider; 
                 }})
             .attr("x", leftMargin)
             .attr("height", barHeight - 1)
             .attr("y", 10);
         
         bar.append("text")
-            .attr("x", function(d) {return x(d.value)/500000 + leftMargin + 30;})
+            .attr("x", function(d) {return x(d.value)/barDivider + leftMargin + 30;})
             .attr("y", barHeight / 2 + topMargin)
             .attr("dy", ".35em")
             .text(function(d) { 
@@ -357,7 +358,7 @@
                 else {
                     filterAll(0)
                     deleteChildren(headDiv, 0)
-                    var localSum = findSum(globaldata, function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];})
+                    var localSum = findSum(globaldata, function(d) { return d["promotionalRetailPrice"] * d["salesQuantity"];})
                     tangle.setValue('currentspend', addCommas(Math.round(localSum*100)/100));
             tangle.setValue('per', Math.round((localSum*10000)/globalsum)/100);
                     paintAll(0, localSum)
@@ -519,7 +520,7 @@
                         var newtoptypes = null
                         
                         var newdimension = GetOrCreateDimension(newdimensionname)
-                        var newdimensionSpend = newdimension.group().reduceSum(function(d){return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];})
+                        var newdimensionSpend = newdimension.group().reduceSum(function(d){return d["promotionalRetailPrice"] * d["salesQuantity"];})
                              newtoptypes = [{key: "", value: 0}]
                              newtoptypes = newtoptypes.concat(newdimensionSpend.top(bigNumber))
 //                        var newtoptypes = newdimensionSpend.top(bigNumber)
@@ -595,7 +596,7 @@
           .attr("y", 6)
           .attr("dy", ".71em")
           .style("text-anchor", "end")
-          .text("Profits");
+          .text("Sales");
 
       svg.append("path")
           .datum(data)

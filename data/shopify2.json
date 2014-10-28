@@ -1,0 +1,49 @@
+[
+{
+  "name": "year",
+  "hierarchical": "true",
+  "hierarchicalcolumns": [
+    "month"
+  ],
+  "title": "Select a Year"
+},
+{
+  "name": "originCountryID",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select Origin Country"
+},
+{
+  "name": "SUPPLIER",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Supplier"
+},
+{
+  "name": "channelId",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a channel"
+},
+{
+  "name": "locType",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Location Type"
+},
+{
+  "name": "week",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Trend",
+  "type": "line"
+},
+{
+  "name": "ITEM",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Top Items",
+  "maxItems": "10",
+  "rowId": 1
+}
+]
