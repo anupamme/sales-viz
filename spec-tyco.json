@@ -1,0 +1,42 @@
+[
+{
+  "name": "Type",
+  "hierarchical": "true",
+  "hierarchicalcolumns": [
+    "Disty"
+  ],
+  "title": "Select a Distributor"
+},
+{
+  "name": "Quarter",
+  "hierarchical": "true",
+  "hierarchicalcolumns": ["Month"],
+  "title": "Select a Time"
+},
+{
+  "name": "Region",
+  "hierarchical": "true",
+  "hierarchicalcolumns": ["Ship To City Formated"],
+  "title": "Select a Time"
+},
+{
+  "name": "Business Vertical",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Time"
+},
+{
+  "name": "Customer Name",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Time"
+},
+{
+  "name": "Billed Value",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Sales"
+}
+    
+]
+

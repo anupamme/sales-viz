@@ -11,16 +11,25 @@ class Shopify(webapp2.RequestHandler):
 class CSVUpload(webapp2.RequestHandler):
 
     def get(self):
-        html = open('data5.html', 'r').read()
+        html = open('draw5.html', 'r').read()
+        self.response.headers['Content-Type'] = 'text/html'
+    	self.response.write(html)
+
+class Demo(webapp2.RequestHandler):
+
+    def get(self):
+        html = open('draw4.html', 'r').read()
         self.response.headers['Content-Type'] = 'text/html'
     	self.response.write(html)
         
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
-        html = open('draw4.html', 'r').read()
+        html = open('index.html', 'r').read()
         self.response.headers['Content-Type'] = 'text/html'
     	self.response.write(html)
+        
+    
 
 application = webapp2.WSGIApplication([
-    ('/', MainPage), ('/shopify', Shopify), ('/csvupload', CSVUpload)], debug=True)
+    ('/', MainPage), ('/demo', Demo), ('/shopify', Shopify), ('/csvupload', CSVUpload)], debug=True)

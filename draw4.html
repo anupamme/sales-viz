@@ -1,135 +1,330 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<style>
-    #time {
-        position: absolute;
-        left: 10px;
-        top: 100px;
-        width: 300px;
-        height: 500px;
-    }
-    .primary {
-        height: 400px;
-    }
-    .primary rect {
-        fill: lightgrey;
-    }
-    .primary text {
-        fill: grey;
-        font: 10px sans-serif;
-        text-anchor: end;
-    }
-    #trend {
-        fill: grey;
-        font: 12px sans-serif;
-        text-anchor: end;
-    }
-    .tertiary {
-        height: 400px;
-    }
-    .tertiary rect {
-        fill: lightgrey;
-    }
-    .tertiary text {
-        fill: grey;
-        font: 12px sans-serif;
-        text-anchor: end;
-    }
-    #spendpercent {
-        color: red;
-    }
-    body {
-        font: 10px sans-serif;
-    }
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <style>
+        #time {
+            position: relative;  
+            width: 300px;
+            height: 500px;
+        }
+        .primary {
+            height: 400px;
+        }
+        .primary rect {
+            fill: lightgrey;
+        }
+        .primary text {
+            fill: grey;
+            font: 10px sans-serif;
+            text-anchor: end;
+        }
+        #trend {
+            fill: grey;
+            font: 12px sans-serif;
+            text-anchor: end;
+        }
+        .tertiary {
+            height: 400px;
+        }
+        .tertiary rect {
+            fill: lightgrey;
+        }
+        .tertiary text {
+            fill: grey;
+            font: 12px sans-serif;
+            text-anchor: end;
+        }
+        #spendpercent {
+            color: red;
+        }
+        body {
+            font: 10px sans-serif;
+        }
 
-    .axis path,
-    .axis line {
-        fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
-    }
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
 
-    .x.axis path {
-        display: none;
-    }
+        .x.axis path {
+            display: none;
+        }
 
-    .line {
-        fill: none;
-        stroke: steelblue;
-        stroke-width: 1.5px;
-    }
-    
-    #numbers {
-        position: absolute;
-        color: grey
-    }
-    
-    h1{
-        text-align: center;
-        color: grey
-    }
-    .overlay {
-        fill: none;
-        pointer-events: all;
-    }
-    .focus circle {
-        fill: none;
-        stroke: steelblue;
-    }
-    
-</style>
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
+        
+        #numbers {
+            color: grey;
+        }
+        
+        h1{
+            text-align: center;
+            color: grey
+        }
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+        .focus circle {
+            fill: none;
+            stroke: steelblue;
+        }
+
+        .fileUpload {
+            position: relative;
+            overflow: hidden;
+            margin: 10px 5px 10px 10px;
+        }
+        .fileUpload input.upload {
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0;
+            filter: alpha(opacity=0);
+            cursor: pointer;
+        }
+        input, button, select, textarea{
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        .btn{
+            background: #428bca;
+            color: #fff;
+            margin-left: 20px;
+        }
+        .btn:hover{
+            background: #428bca;
+            color: #fff;
+        }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+</head>    
 <body>
     <h1>Profits Dashboard</h1>
-<div id="numbers" style="top: 400px; font-size: initial; text-align: center">
-    <h4>You have selected <span id="spendpercent" data-var="per" data-format="%.2f" style="fill: red">%</span> of profits. The selected amount is <span data-var=currentspend></span> out of total of <span data-var="totalspend"></span></h4>
-</div>
-<div id="time">
- 
- </div>
+   
+    <div id="inputs" class="fileUpload btn btn-primary">
+        <span>Upload CSV</span>
+        <input type="file" id="files" name="files[]" class="upload">
+    </div>
+    <input id="uploadFile" placeholder="Choose File" disabled="disabled" />
+
+     <div id="json" class="fileUpload btn btn-primary">
+        <span>Upload Spec</span>
+        <input type="file" id="jsonSpec" name="files[]" class="upload">
+    </div>
+    <input id="uploadSpec" placeholder="Choose File" disabled="disabled" />
+
+    <input type="button" id="genrate_graph" value="Genrate Graph" class="btn btn-default" />
+    <input type="button" id="use_defaults" value="Use Defaults" class="btn btn-default" />
+   <!--output id="list"></output>
+   <table id="contents" style="width:100%; height:400px;" border=""></table-->
+
+    <div id="numbers" style="top: 450px; font-size: initial; text-align: center">
+        <h4>You have selected <span id="spendpercent" data-var="per" data-format="%.2f" style="fill: red">%</span> of profits. The selected amount is <span data-var=currentspend></span> out of total of <span data-var="totalspend"></span></h4>
+    </div>
+    <div id="time">
+    </div>
 </body>
-<script src="js/d3.min.js" charset="utf-8"></script>
+
 <script src="js/jquery.min.js"></script>
-<script src="js/crossfilter.min.js"></script>
-<script src="js/Tangle/Tangle.js"></script>
-<script src="js/Tangle/TangleKit/sprintf.js"></script>
-<script src="js/Tangle/TangleKit/TangleKit.js"></script>
-<script src="js/Tangle/TangleKit/mootools.js"></script>
+<script src="js/jquery.csv.js"></script>
 <script>
-    
-    tangle = new Tangle (document.getElementById("numbers"), {
-    initialize: function () {
-        this.totalspend = 100.0
-        this.currentspend = 100.0;
-        this.per = 100.0
-    },
-        update: function(){}
-    });
-/*
-*   Read the spec file and print javascript code.
-*/
-    var leftMargin = 120;
-    var topMargin = 10;
-    var bigNumber = 100;
-    var barHeight = 14, width = 300;
-    var x = d3.scale.linear()
-                .range([0, width]); 
-    var title = "Select All";
-    var hierarchicalType = "hierarchical"
-    var globalspec = null
-    var globalMapForDimensions = {}
-    var cf = null
-    var globaldata = null
-    // to store state: only data we store to store state.
-    var lastClickWasLastRow = false
- 
+    var globalspec = null,
+    globaldata = null,
+    csvHeaders = new Array(),
+    specHeaders = new Array();
+
+  $(document).ready(function() {
+    if(isAPIAvailable()) {
+      $('#files').bind('change', handleFileSelect);
+      $('#jsonSpec').bind('change', handleJsonData);
+    }
+  });
+
+  function isAPIAvailable() {
+    // Check for the various File API support.
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+      // Great success! All the File APIs are supported.
+      return true;
+    } else {
+      // source: File API availability - http://caniuse.com/#feat=fileapi
+      // source: <output> availability - http://html5doctor.com/the-output-element/
+      document.writeln('The HTML5 APIs used in this form are only available in the following browsers:<br />');
+      // 6.0 File API & 13.0 <output>
+      document.writeln(' - Google Chrome: 13.0 or later<br />');
+      // 3.6 File API & 6.0 <output>
+      document.writeln(' - Mozilla Firefox: 6.0 or later<br />');
+      // 10.0 File API & 10.0 <output>
+      document.writeln(' - Internet Explorer: Not supported (partial support expected in 10.0)<br />');
+      // ? File API & 5.1 <output>
+      document.writeln(' - Safari: Not supported<br />');
+      // ? File API & 9.2 <output>
+      document.writeln(' - Opera: Not supported');
+      return false;
+    }
+  }
+
+  function handleFileSelect(evt) {
+    var files = evt.target.files; // FileList object
+    var file = files[0];
+
+    // read the file metadata
+    var output = ''
+        output += '<span style="font-weight:bold;">' + escape(file.name) + '</span><br />\n';
+        output += ' - FileType: ' + (file.type || 'n/a') + '<br />\n';
+        output += ' - FileSize: ' + file.size + ' bytes<br />\n';
+        output += ' - LastModified: ' + (file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a') + '<br />\n';
+
+    $("#uploadFile").val(file.name);    
+    // read the file contents
+    printTable(file);
+
+
+    // post the results
+   // $('#list').append(output);
+  }
+
+ function handleJsonData(evt){
+    var files = evt.target.files; // FileList object
+    var file = files[0];
+    var reader = new FileReader();
+    $("#uploadSpec").val(file.name);     
+    reader.readAsText(file);
+    reader.onload = function(event){
+        var text = reader.result;
+        var specJson = JSON.stringify(eval(text));
+       globalspec = $.parseJSON( specJson );
+      // console.log(globalspec);
+       for(var rowHeader=0; rowHeader<globalspec.length; rowHeader++){
+            specHeaders.push(globalspec[rowHeader].name);
+        }       
+    };
+
+  }
+
+  function printTable(file) {
+    var reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function(event){
+      var csv = event.target.result;
+    data = $.csv.toObjects(csv);
+    globaldata = data;
+    for(var rowHeader in data[0]){
+        if(rowHeader.indexOf("function ") == -1){
+            csvHeaders.push(rowHeader);
+        }
+      }
+      /*for(var row in data) {
+        html += '<tr>\r\n';
+        for(var item in data[row]) {
+          html += '<td>' + data[row][item] + '</td>\r\n';
+        }
+        html += '</tr>\r\n';
+      }*/
+      //$('#contents').html(html);
+    };
+    reader.onerror = function(){ alert('Unable to read ' + file.fileName); };
+  }
+
+$('#use_defaults').click(function(){
     d3.json('data/spec2.json', function(error, spec){
         if (spec.length === 0){
             return
         }
         globalspec = spec
         // read the data file.
-        d3.csv('data/data4.csv', function(error, data) {
-            globaldata = data
+        d3.csv('data/data4.csv', function(error, data2) {
+            data = data2
+            globaldata = data2
+            genrateGraph()
+        });
+    });
+});
+    
+$("#genrate_graph").click( function(){
+    var chk = -1, errorHeader = "";
+    for(var i=0; i< specHeaders.length; i++){
+        //console.log(specHeaders[i]);
+        var chk = $.inArray(specHeaders[i], csvHeaders);
+        if(chk == -1){
+            errorHeader = specHeaders[i];
+            break;
+        }
+       // console.log($.inArray(specHeaders[i], csvHeaders));
+        //console.log(chk);
+    }
+    if(chk != -1){
+        genrateGraph();
+    }
+    else{
+        alert('"'+errorHeader+'"' + ' Field in Spec doesnot match with CSV File Header uploaded !');
+    }
+});
+  
+</script>
+
+<script src="js/d3.min.js" charset="utf-8"></script>
+<script src="js/crossfilter.min.js"></script>
+<script src="js/Tangle/Tangle.js"></script>
+<script src="js/Tangle/TangleKit/sprintf.js"></script>
+<script src="js/Tangle/TangleKit/TangleKit.js"></script>
+<script src="js/Tangle/TangleKit/mootools.js"></script>
+<script>
+ 
+
+
+    var leftMargin = 170;
+    var topMargin = 10;
+    var bigNumber = 100;
+    var barHeight = 14, width = 300;
+    var x = d3.scale.linear().range([0, width]); 
+    var title = "Select All";
+    var hierarchicalType = "hierarchical"
+    
+    var globalMapForDimensions = {}
+    var cf = null
+    // to store state: only data we store to store state.
+    var lastClickWasLastRow = false
+
+
+function genrateGraph(){
+
+    tangle = new Tangle (document.getElementById("numbers"), {
+    initialize: function () {
+        this.totalspend = 100.0;
+        this.currentspend = 100.0;
+        this.per = 100.0;
+    },
+        update: function(){}
+    });
+/*
+*   Read the spec file and print javascript code.
+*/
+
+
+
+ 
+   // d3.json('data/spec2.json', function(error, spec){
+        if (globalspec.length === 0){
+            return
+        }
+        //globalspec = spec;
+        // read the data file.
+       // d3.csv('data/data4.csv', function(error, data) {
+            //console.log(data);
+            //globaldata = data
             cf = crossfilter(data)
             // step 1: paint the unikey with hierarchy.
             globalsum = findSum(data, function(d) { return d["finalRetailPrice"] * d["salesQuantity"];})
@@ -137,8 +332,9 @@
             tangle.setValue('totalspend', addCommas(Math.round(globalsum*100)/100))
             tangle.setValue('per', Math.round(globalsum/globalsum) * 100);
             paintAll(0, globalsum)
-        });
-    });
+       // });
+   // });
+}
     
     function GetOrCreateDimension(key){
         var keyDim = null
@@ -174,7 +370,7 @@
                 }
                 if (type === 'line'){
                     var topTypes = keyDimSpend.top(maxNo)
-                    var margin = {top: 100, right: 20, bottom: 30, left: 50}
+                    var margin = {top: 100, right: 70, bottom: 30, left: 100}
                     drawTrendLine(topTypes, sum, margin)
                 }
                 else {
@@ -185,15 +381,15 @@
                     //$('#time').add()
                     $('#time').append(node)
                     var newnode = null
-                    if (globalspec[i]['name'] === 'item'){
+                    if (globalspec[i]['name'] === 'shortDesc'){
                         newnode = d3.selectAll('#' + key)
                         .attr("width", width)
-                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 810px;');
+                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 830px; top: 350px;');
                     }
                     else {
                     newnode = d3.selectAll('#' + key)
                         .attr("width", width)
-                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: ' + leftPos + 'px; top: 400px;');
+                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: ' + leftPos + 'px; top: 50px');
                     }
                     drawBarChart(newnode, topTypes, sum, leftMargin, keyDim, globalspec[i]["hierarchicalcolumns"], 0, i)
                 }
@@ -279,7 +475,7 @@
         var bar = startElement.selectAll("g")
                 .data(topTypes)
                 .enter().append("g")
-                .attr("transform", function(d, i) { return "translate(0," + i *                     barHeight + ")"; });
+                .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
         
         var text1 = bar.append("text")
             .attr("x", function(d) { 
@@ -532,7 +728,8 @@
     }
     
     var parseMonth = d3.time.format("%b").parse,
-    bisectDate = d3.bisector(function(d) { return d.key; }).left,
+    bisectDate = d3.bisector(function(d) { 
+        return d.key; }).left,
     formatValue = d3.format(",.2f"),
     formatCurrency = function(d) { return "Rs" + formatValue(d); };
 
@@ -563,7 +760,7 @@
             .attr("id", "trend")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
-            .attr("style", "position: absolute; top: -100")
+            .attr("style", "position: absolute; top: 200px")
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
             

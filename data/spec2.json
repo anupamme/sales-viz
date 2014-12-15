@@ -8,16 +8,16 @@
   "title": "Select a Year"
 },
 {
-  "name": "category",
-  "hierarchical": "false",
-  "hierarchicalcolumns": [],
-  "title": "Select a Category"
-},
-{
   "name": "state",
   "hierarchical": "true",
   "hierarchicalcolumns": ["district"],
   "title": "Select a State"
+},
+{
+  "name": "category",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Select a Category"
 },
 {
   "name": "size",
@@ -32,10 +32,11 @@
   "title": "Select a Store"
 },
 {
-  "name": "item",
+  "name": "shortDesc",
   "hierarchical": "false",
   "hierarchicalcolumns": [],
   "title": "Top Items",
+    "display_name": "short_desc",
   "maxItems": "10"
 },
 {
