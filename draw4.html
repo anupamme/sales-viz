@@ -111,6 +111,9 @@
             background: #428bca;
             color: #fff;
         }
+        .verticalLine {
+            border-left: thick solid #ff0000;
+        }
     </style>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
@@ -303,6 +306,7 @@ $("#genrate_graph").click( function(){
     var cf = null
     // to store state: only data we store to store state.
     var lastClickWasLastRow = false
+    var verticalLineDrawn = false
 
 
 function genrateGraph(){
@@ -374,6 +378,13 @@ function genrateGraph(){
                 if (!Number.isInteger(maxNo)){
                     maxNo = bigNumber
                 }
+                // check if vertical line needs to be drawn.
+                if (globalspec[i]['hierarchical'] === 'false' && verticalLineDrawn === false){
+                    var verticalline = "<div class=\"verticalLine\">I am verticalline.</div>" 
+                    $('#time').append(verticalline)
+                    verticalLineDrawn = true
+                }
+                
                 if (type === 'line'){
                     var topTypes = keyDimSpend.top(maxNo)
                     var margin = {top: 100, right: 70, bottom: 30, left: 100}
@@ -390,9 +401,16 @@ function genrateGraph(){
                     if (globalspec[i]['name'] === 'shortDesc'){
                         newnode = d3.selectAll('#' + key)
                         .attr("width", width)
-                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 830px; top: 350px;');
+                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 880px; top: 350px;');
                     }
                     else {
+                        
+                        $('#time').append()
+                        console.log('hierarchical val: ' + globalspec[i]['hierarchical'])
+                        if (globalspec[i]['hierarchical'] === 'false'){
+                            leftPos += 270
+                            console.log('incrementing leftpos by 270 ' + leftPos)
+                        }
                     newnode = d3.selectAll('#' + key)
                         .attr("width", width)
                         .attr("style", 'visibility: visible;position: absolute;width: 330px;left: ' + leftPos + 'px; top: 50px');
