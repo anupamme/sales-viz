@@ -114,6 +114,27 @@
         .verticalLine {
             border-left: thick solid #ff0000;
         }
+        .v-separator
+        {
+            content: "";
+            width: 0px;
+            height: 1000px;
+            border-right: 1.5px solid #fafafa;
+            border-left: 1.5px solid #b4b4b4;
+            padding: 0;
+            padding-left: 777px
+        }
+        .v-boundary
+        {
+            content: "";
+            width: 600px;
+            display: inline-block;
+            padding: 0;
+            padding-left: 650px
+        }
+        #flat-att{
+            padding-left: 5em
+        }
     </style>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
@@ -380,8 +401,10 @@ function genrateGraph(){
                 }
                 // check if vertical line needs to be drawn.
                 if (globalspec[i]['hierarchical'] === 'false' && verticalLineDrawn === false){
-                    var verticalline = "<div class=\"verticalLine\">I am verticalline.</div>" 
-                    $('#time').append(verticalline)
+                    var beforeText = "<div class=\"v-boundary\"><h5>Hierarchical Attributes <span id=\"flat-att\" Flat Attributes></span></h5></div>"
+                    var verticalLine = "<div class=\"v-separator\"></div>"
+                    //$('#time').append(beforeText)
+                    $('#time').append(verticalLine)
                     verticalLineDrawn = true
                 }
                 
