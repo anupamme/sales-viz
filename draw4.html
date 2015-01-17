@@ -389,6 +389,7 @@ function genrateGraph(){
     }
     
     function paintAll(index, sum){
+        console.log('paint: index, sum: ' + index + ', ' + sum)
         for (var i = Math.max(index, 0); i < globalspec.length + index; i++)
             {
                 if (i >= globalspec.length){
@@ -409,13 +410,13 @@ function genrateGraph(){
                     maxNo = bigNumber
                 }
                 // check if vertical line needs to be drawn.
-                if (globalspec[i]['hierarchical'] === 'false' && verticalLineDrawn === false){
-                    var beforeText = "<div class=\"v-boundary\"><h5>Hierarchical Attributes <span id=\"flat-att\" Flat Attributes></span></h5></div>"
-                    var verticalLine = "<div class=\"v-separator\"></div>"
-                    //$('#time').append(beforeText)
-                    $('#time').append(verticalLine)
-                    verticalLineDrawn = true
-                }
+//                if (globalspec[i]['hierarchical'] === 'false' && verticalLineDrawn === false){
+//                    var beforeText = "<div class=\"v-boundary\"><h5>Hierarchical Attributes <span id=\"flat-att\" Flat Attributes></span></h5></div>"
+//                    var verticalLine = "<div class=\"v-separator\"></div>"
+//                    //$('#time').append(beforeText)
+//                    $('#time').append(verticalLine)
+//                    verticalLineDrawn = true
+//                }
                 
                 if (type === 'line'){
                     var topTypes = keyDimSpend.top(maxNo)
@@ -437,11 +438,11 @@ function genrateGraph(){
                     }
                     else {
                         
-                        $('#time').append()
-                        console.log('hierarchical val: ' + globalspec[i]['hierarchical'])
+                        //$('#time').append(node)
+                        //console.log('hierarchical val: ' + globalspec[i]['hierarchical'])
                         if (globalspec[i]['hierarchical'] === 'false'){
                             leftPos += 270
-                            console.log('incrementing leftpos by 270 ' + leftPos)
+                            //console.log('incrementing leftpos by 270 ' + leftPos)
                         }
                     newnode = d3.selectAll('#' + key)
                         .attr("width", width)
@@ -516,6 +517,7 @@ function genrateGraph(){
     }
     
     function deleteChildren(node, index){
+        console.log('delete: node, index: ' + node + ', ' + index)
         var tosub = Math.min(0, index)
         while ($(node).children().length > Math.abs(index)){
             $(node.children()[$(node).children().length - 1 + tosub]).remove()
@@ -617,7 +619,8 @@ function genrateGraph(){
             }
         })
         rect.on('click', function(d){
-            console.log("my val: " + d.value)
+            debugger
+            //console.log("my val: " + d.value)
             tangle.setValue('currentspend', addCommas(Math.round(d.value*100)/100));
             tangle.setValue('per', Math.round((d.value*10000)/globalsum)/100);
             var headDiv = $('#time')
