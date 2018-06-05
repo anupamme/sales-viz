@@ -15,6 +15,13 @@ class CSVUpload(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
     	self.response.write(html)
 
+class SapDemo(webapp2.RequestHandler):
+
+    def get(self):
+        html = open('draw-sap.html', 'r').read()
+        self.response.headers['Content-Type'] = 'text/html'
+    	self.response.write(html)
+        
 class Demo(webapp2.RequestHandler):
 
     def get(self):
@@ -32,4 +39,4 @@ class MainPage(webapp2.RequestHandler):
     
 
 application = webapp2.WSGIApplication([
-    ('/', MainPage), ('/demo', Demo), ('/shopify', Shopify), ('/csvupload', CSVUpload)], debug=True)
+    ('/', MainPage), ('/demo', Demo),('/sapdemo', SapDemo), ('/shopify', Shopify), ('/csvupload', CSVUpload)], debug=True)

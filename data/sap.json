@@ -1,0 +1,22 @@
+[
+{
+  "name": "category",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Sales by Category"
+},
+{
+  "name": "employee",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Employee Contribution to Sales"
+},
+{
+  "name": "part",
+  "hierarchical": "false",
+  "hierarchicalcolumns": [],
+  "title": "Top Selling Parts",
+    "display_name": "",
+  "maxItems": "10"
+}
+]

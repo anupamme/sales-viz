@@ -33,7 +33,7 @@
         }
         .tertiary text {
             fill: grey;
-            font: 12px sans-serif;
+            font: 14px sans-serif;
             text-anchor: end;
         }
         #spendpercent {
@@ -324,7 +324,6 @@ $("#genrate_graph").click( function(){
  
 
 
-    var leftMargin = 170;
     var topMargin = 10;
     var bigNumber = 100;
     var barHeight = 14, width = 300;
@@ -336,8 +335,12 @@ $("#genrate_graph").click( function(){
     var cf = null
     // to store state: only data we store to store state.
     var lastClickWasLastRow = false
-    var verticalLineDrawn = false
-
+    var verticalLineDrawn = true
+    var lengthOfBar = 290000
+    var leftGap = 410
+    var widthpx = 480
+    var marginForTextWithBar = 40
+    
 
 function genrateGraph(){
 
@@ -371,7 +374,7 @@ function genrateGraph(){
             tangle.setValue('currentspend', addCommas(Math.round(globalsum*100)/100))
             tangle.setValue('totalspend', addCommas(Math.round(globalsum*100)/100))
             tangle.setValue('per', Math.round(globalsum/globalsum) * 100);
-            paintAll(0, globalsum)
+            paintAll(0, globalsum, 0, 50)
        // });
    // });
 }
@@ -388,8 +391,12 @@ function genrateGraph(){
         return keyDim
     }
     
-    function paintAll(index, sum){
+    function paintAll(index, sum, leftoffset, topOffset){
         console.log('paint: index, sum: ' + index + ', ' + sum)
+        debugger
+        var leftPos = leftoffset
+        var leftMargin = 170;
+        var topPos = topOffset
         for (var i = Math.max(index, 0); i < globalspec.length + index; i++)
             {
                 if (i >= globalspec.length){
@@ -403,7 +410,11 @@ function genrateGraph(){
                 keyDim = GetOrCreateDimension(key)
                 keyDimSpend = keyDim.group().reduceSum(function(d){ return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"]; })
                 //var topTypes = keyDimSpend.top(bigNumber)
-                var leftPos = i * 270 // XXX: calculate left position correctly.
+                if (leftPos > 1000){
+                    debugger
+                    leftPos = 0
+                    topPos += 250
+                }
                 var type = globalspec[i]["type"]
                 var maxNo = Number.parseInt(globalspec[i]["maxItems"])
                 if (!Number.isInteger(maxNo)){
@@ -421,7 +432,7 @@ function genrateGraph(){
                 if (type === 'line'){
                     var topTypes = keyDimSpend.top(maxNo)
                     var margin = {top: 100, right: 70, bottom: 30, left: 100}
-                    drawTrendLine(topTypes, sum, margin)
+                    drawTrendLine(topTypes, sum, margin, topPos)
                 }
                 else {
                     var topTypes = [{key: globalspec[i]['title'], value: 0}, {key: title, value: sum}]
@@ -434,22 +445,23 @@ function genrateGraph(){
                     if (globalspec[i]['name'] === 'shortDesc'){
                         newnode = d3.selectAll('#' + key)
                         .attr("width", width)
-                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: 880px; top: 350px;');
+                        .attr("style", 'visibility: visible;position: absolute;width: ' + widthpx + 'px;left: 880px; top: ' + (350 + topPos) + 'px;');
                     }
                     else {
                         
                         //$('#time').append(node)
                         //console.log('hierarchical val: ' + globalspec[i]['hierarchical'])
                         if (globalspec[i]['hierarchical'] === 'false'){
-                            leftPos += 270
+//                            leftPos += 270
                             //console.log('incrementing leftpos by 270 ' + leftPos)
                         }
                     newnode = d3.selectAll('#' + key)
                         .attr("width", width)
-                        .attr("style", 'visibility: visible;position: absolute;width: 330px;left: ' + leftPos + 'px; top: 50px');
+                        .attr("style", 'visibility: visible;position: absolute;width: ' + widthpx + 'px;left: ' + leftPos + 'px; top: ' + topPos+ 'px');
                     }
-                    drawBarChart(newnode, topTypes, sum, leftMargin, keyDim, globalspec[i]["hierarchicalcolumns"], 0, i)
+                    drawBarChart(newnode, topTypes, sum, leftMargin, keyDim, globalspec[i]["hierarchicalcolumns"], 0, i, leftPos, topPos)
                 }
+                leftPos = leftPos + leftGap // XXX: calculate left position correctly.
                 keyDim.filterAll()
             }
             // generate data and call draw trend line.
@@ -524,7 +536,7 @@ function genrateGraph(){
         }
     }
     
-    function drawBarChart(startElement, topTypes, sum, leftMargin, dimension, hierarchicalNodes, innerIndex, higherIndex){
+    function drawBarChart(startElement, topTypes, sum, leftMargin, dimension, hierarchicalNodes, innerIndex, higherIndex, leftPos, topPos){
         for (i = 2; i < topTypes.length; i++){
             if (topTypes[i].value === 0){
                 topTypes.splice(i, Number.MAX_VALUE)
@@ -539,9 +551,9 @@ function genrateGraph(){
             .attr("x", function(d) { 
             if (d.value === 0) 
             {
-                return leftMargin + 10;
+                return leftMargin + marginForTextWithBar;
             }
-                return leftMargin - 10;
+                return leftMargin + marginForTextWithBar - 20;
              })
             .attr("y", barHeight / 2 + topMargin)
             .attr("dy", ".35em")
@@ -561,14 +573,14 @@ function genrateGraph(){
                     return 0
                 }
                 else{
-                    return x(d.value)/500000; 
+                    return (x(d.value)*globalsum)/(sum * lengthOfBar); 
                 }})
-            .attr("x", leftMargin)
+            .attr("x", leftMargin + marginForTextWithBar - 10)
             .attr("height", barHeight - 1)
             .attr("y", 10);
         
         bar.append("text")
-            .attr("x", function(d) {return x(d.value)/500000 + leftMargin + 30;})
+            .attr("x", function(d) {return (x(d.value) * globalsum)/(sum * lengthOfBar) + leftMargin + marginForTextWithBar + 30;})
             .attr("y", barHeight / 2 + topMargin)
             .attr("dy", ".35em")
             .text(function(d) { 
@@ -606,7 +618,7 @@ function genrateGraph(){
                     deleteChildren(headDiv, currentSvgIndex + 1)
                     tangle.setValue('currentspend', addCommas(Math.round(d.value*100)/100));
             tangle.setValue('per', Math.round((d.value*10000)/globalsum)/100);
-                    paintAll(currentSvgIndex + 1, d.value)
+                    paintAll(currentSvgIndex + 1, d.value, leftPos + leftGap, topPos)
                 }
                 else {
                     filterAll(0)
@@ -614,7 +626,7 @@ function genrateGraph(){
                     var localSum = findSum(globaldata, function(d) { return (d["finalRetailPrice"] - d["AV_COST"]) * d["salesQuantity"];})
                     tangle.setValue('currentspend', addCommas(Math.round(localSum*100)/100));
             tangle.setValue('per', Math.round((localSum*10000)/globalsum)/100);
-                    paintAll(0, localSum)
+                    paintAll(0, localSum, leftPos + leftGap, topPos)
                 }
             }
         })
@@ -663,7 +675,7 @@ function genrateGraph(){
                         // create dimension apply filter of current node.
                         var keyDim = globalMapForDimensions[globalspec[currentSvgIndex]["name"]]
                         keyDim.filter(d.key)
-                        paintAll(-1, d.value)
+                        paintAll(-1, d.value, leftPos + leftGap, topPos)
                         // repaint all nodes from 0 to second last.
                         // hack to bring the order back of children.
                         var dup = $('#time').children()[0]
@@ -680,9 +692,9 @@ function genrateGraph(){
                             deleteChildren(headDiv, 0)
                             // apply filter of current node (if any)
                             var keyDim = globalMapForDimensions[globalspec[currentSvgIndex]["name"]]
-                            paintAll(- globalspec.length + currentSvgIndex + 1, globalsum)
+                            paintAll(- globalspec.length + currentSvgIndex + 1, globalsum, leftPos + leftGap, topPos)
                             keyDim.filter(d.key)
-                            paintAll(currentSvgIndex + 1, d.value)
+                            paintAll(currentSvgIndex + 1, d.value, leftPos + leftGap, topPos)
                         }
                         else {
                             filterAll(currentSvgIndex)
@@ -705,7 +717,7 @@ function genrateGraph(){
                             }
                             var currentVal2 = $(currentNode.children()[0]).text()
                             globalMapForDimensions[currentHigherKey].filter(currentVal2)
-                            paintAll(currentSvgIndex + 1, d.value)    
+                            paintAll(currentSvgIndex + 1, d.value, leftPos + leftGap, topPos)    
                         }
                         // paint self and following children.
                         lastClickWasLastRow = false
@@ -792,7 +804,7 @@ function genrateGraph(){
     formatValue = d3.format(",.2f"),
     formatCurrency = function(d) { return "Rs" + formatValue(d); };
 
-    function drawTrendLine(data, sum, margin){     
+    function drawTrendLine(data, sum, margin, topPos){     
     //        var margin = {top: 20, right: 20, bottom: 30, left: 50},
         var width = 720 - margin.left - margin.right,
             height = 375 - margin.top - margin.bottom;
@@ -822,7 +834,7 @@ function genrateGraph(){
             .attr("id", "trend")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
-            .attr("style", "position: absolute; top: 200px")
+            .attr("style", 'position: absolute; top: ' + topPos + 'px')
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
             

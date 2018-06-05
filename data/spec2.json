@@ -5,37 +5,37 @@
   "hierarchicalcolumns": [
     "month"
   ],
-  "title": "Select a Year"
+  "title": "Profits by Year"
 },
 {
   "name": "state",
   "hierarchical": "true",
   "hierarchicalcolumns": ["district"],
-  "title": "Select a State"
+  "title": "Profits by State"
 },
 {
   "name": "category",
   "hierarchical": "false",
   "hierarchicalcolumns": [],
-  "title": "Select a Category"
+  "title": "Profits by Category"
 },
 {
   "name": "size",
   "hierarchical": "false",
   "hierarchicalcolumns": [],
-  "title": "Select a Size Profile"
+  "title": "Profits by Size Profile"
 },
 {
   "name": "store",
   "hierarchical": "false",
   "hierarchicalcolumns": [],
-  "title": "Select a Store"
+  "title": "Profits by Store"
 },
 {
   "name": "shortDesc",
   "hierarchical": "false",
   "hierarchicalcolumns": [],
-  "title": "Top Items",
+  "title": "Top Profitable Items",
     "display_name": "short_desc",
   "maxItems": "10"
 },
@@ -45,6 +45,5 @@
   "hierarchicalcolumns": [],
   "title": "Trend",
   "type": "line"
-}
-    
+}  
 ]
